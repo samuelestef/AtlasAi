@@ -32,4 +32,28 @@ def add_indicators(df):
         window=14
     )
 
+    # ADX
+    df["ADX"] = ta.trend.adx(
+        high=df["High"],
+        low=df["Low"],
+        close=df["Close"],
+        window=14
+    )
+
+    # DI+
+    df["DI_PLUS"] = ta.trend.adx_pos(
+        high=df["High"],
+        low=df["Low"],
+        close=df["Close"],
+        window=14
+    )
+
+    # DI-
+    df["DI_MINUS"] = ta.trend.adx_neg(
+        high=df["High"],
+        low=df["Low"],
+        close=df["Close"],
+        window=14
+    )
+
     return df
