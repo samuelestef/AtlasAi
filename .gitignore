@@ -5,6 +5,8 @@ __pycache__/
 
 # Virtual environment
 venv/
+
+# Environment / secrets
 .env
 
 # VS Code
@@ -15,6 +17,11 @@ venv/
 
 # Logs
 logs/
+*.log
+
+# Runtime state
+paper_state.json
+telegram_alert_state.json
 
 # Jupyter
 .ipynb_checkpoints/

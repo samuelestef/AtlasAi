@@ -1,0 +1,9 @@
+backtesting==0.6.6
+loguru==0.7.3
+numpy<2.3
+pandas==3.0.5
+python-dotenv==1.2.2
+python-telegram-bot==22.8
+requests==2.34.2
+ta==0.11.0
+yfinance==1.5.2
