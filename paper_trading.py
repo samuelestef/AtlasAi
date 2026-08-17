@@ -500,12 +500,29 @@ def process_market():
             "per la strategia."
         )
 
+    # ========================================================
+    # USA SOLO L'ULTIMA CANDELA H1 COMPLETAMENTE CHIUSA
+    # ========================================================
+
+    closed_df = df.iloc[:-1].copy()
+
+    if len(closed_df) < (
+        config.EMA_SLOW
+        + LOOKBACK
+        + 20
+    ):
+
+        raise RuntimeError(
+            "Dati insufficienti "
+            "per la candela chiusa."
+        )
+
     candle_time = str(
-        df.index[-1]
+        closed_df.index[-1]
     )
 
     close = float(
-        df["Close"].iloc[-1]
+        closed_df["Close"].iloc[-1]
     )
 
     state = load_state()
@@ -522,12 +539,12 @@ def process_market():
         return
 
     # ========================================================
-    # NUOVA CANDELA
+    # NUOVA CANDELA CHIUSA
     # ========================================================
 
     print()
     print(
-        f"NUOVA CANDELA: {candle_time}"
+        f"NUOVA CANDELA CHIUSA: {candle_time}"
     )
 
     print(
@@ -541,7 +558,7 @@ def process_market():
     if state["position"]:
 
         exit_signal = check_exit(
-            df,
+            closed_df,
             state
         )
 
@@ -564,7 +581,9 @@ def process_market():
 
     if state["position"] is None:
 
-        data = PaperData(df)
+        data = PaperData(
+            closed_df
+        )
 
         buy_signal = (
             AtlasSignalV2.should_buy(
@@ -576,7 +595,7 @@ def process_market():
 
             open_position(
                 state,
-                df,
+                closed_df,
                 candle_time
             )
 
