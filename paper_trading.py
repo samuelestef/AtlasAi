@@ -212,10 +212,6 @@ def check_exit(
         df["Close"].iloc[-1]
     )
 
-    atr = float(
-        df["ATR"].iloc[-1]
-    )
-
     ema50 = float(
         df["EMA50"].iloc[-1]
     )
@@ -232,14 +228,21 @@ def check_exit(
         position["entry_bar"]
     )
 
+    atr_entry = float(
+        position["atr_entry"]
+    )
+
     current_bar = len(df) - 1
 
     bars = current_bar - entry_bar
 
-    # STOP LOSS
+    # ========================================================
+    # STOP LOSS FISSATO ALL'INGRESSO
+    # ========================================================
+
     stop_price = (
         entry_price
-        - atr * STOP_ATR
+        - atr_entry * STOP_ATR
     )
 
     if close <= stop_price:
@@ -249,10 +252,13 @@ def check_exit(
             close
         )
 
-    # TAKE PROFIT
+    # ========================================================
+    # TAKE PROFIT FISSATO ALL'INGRESSO
+    # ========================================================
+
     take_price = (
         entry_price
-        + atr * TAKE_ATR
+        + atr_entry * TAKE_ATR
     )
 
     if close >= take_price:
@@ -262,7 +268,10 @@ def check_exit(
             close
         )
 
+    # ========================================================
     # TREND EXIT
+    # ========================================================
+
     if ema50 < ema200:
 
         return (
@@ -270,7 +279,10 @@ def check_exit(
             close
         )
 
+    # ========================================================
     # TIMEOUT
+    # ========================================================
+
     if bars >= config.MAX_BARS:
 
         return (
@@ -386,12 +398,24 @@ def open_position(
         state["balance"]
     )
 
+    stop_price = (
+        close
+        - atr * STOP_ATR
+    )
+
+    take_price = (
+        close
+        + atr * TAKE_ATR
+    )
+
     state["position"] = {
         "entry_time": candle_time,
         "entry_price": close,
         "entry_bar": len(df) - 1,
         "capital": capital,
         "atr_entry": atr,
+        "stop_price": stop_price,
+        "take_price": take_price,
     }
 
     save_state(state)
@@ -404,12 +428,12 @@ def open_position(
     print(f"Entry        : {close:.2f}")
     print(f"ATR          : {atr:.2f}")
     print(
-        f"Stop approx  : "
-        f"{close - atr * STOP_ATR:.2f}"
+        f"Stop Loss    : "
+        f"{stop_price:.2f}"
     )
     print(
-        f"Target approx: "
-        f"{close + atr * TAKE_ATR:.2f}"
+        f"Take Profit  : "
+        f"{take_price:.2f}"
     )
     print(
         f"Balance      : "
