@@ -29,8 +29,10 @@ CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
 BASE_DIR = Path(__file__).resolve().parent
 
-STATE_FILE = BASE_DIR / "active_m15_state.json"
-ALERT_STATE_FILE = BASE_DIR / "telegram_alert_state.json"
+STATE_DIR = Path(os.getenv("ATLAS_STATE_DIR") or BASE_DIR)
+
+STATE_FILE = STATE_DIR / "active_m15_state.json"
+ALERT_STATE_FILE = STATE_DIR / "telegram_alert_state.json"
 
 MONITOR_SECONDS = 5
 

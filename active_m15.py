@@ -36,7 +36,11 @@ INITIAL_CAPITAL = 10000.0
 
 POLL_SECONDS = 60
 
-STATE_FILE = "active_m15_state.json"
+STATE_DIR = os.environ.get("ATLAS_STATE_DIR") or os.path.dirname(
+    os.path.abspath(__file__)
+)
+
+STATE_FILE = os.path.join(STATE_DIR, "active_m15_state.json")
 
 
 # ============================================================
@@ -114,9 +118,16 @@ def load_state():
 
     except Exception:
 
+        backup = f"{STATE_FILE}.corrupt-{int(time.time())}"
+
+        try:
+            os.replace(STATE_FILE, backup)
+        except Exception:
+            backup = "(rinomina non riuscita)"
+
         print(
-            "ATTENZIONE: impossibile "
-            "leggere active_m15_state.json."
+            "ATTENZIONE: impossibile leggere "
+            f"active_m15_state.json. File conservato in: {backup}"
         )
 
         return default_state()
@@ -124,8 +135,10 @@ def load_state():
 
 def save_state(state):
 
+    tmp_file = f"{STATE_FILE}.tmp"
+
     with open(
-        STATE_FILE,
+        tmp_file,
         "w",
         encoding="utf-8"
     ) as file:
@@ -135,6 +148,11 @@ def save_state(state):
             file,
             indent=2
         )
+
+        file.flush()
+        os.fsync(file.fileno())
+
+    os.replace(tmp_file, STATE_FILE)
 
 
 # ============================================================
