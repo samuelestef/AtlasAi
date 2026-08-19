@@ -29,7 +29,7 @@ CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
 BASE_DIR = Path(__file__).resolve().parent
 
-STATE_FILE = BASE_DIR / "paper_state.json"
+STATE_FILE = BASE_DIR / "active_m15_state.json"
 ALERT_STATE_FILE = BASE_DIR / "telegram_alert_state.json"
 
 MONITOR_SECONDS = 5
@@ -73,7 +73,7 @@ def load_state():
     except Exception as error:
 
         print(
-            f"⚠️ Impossibile leggere paper_state.json: {error}"
+            f"⚠️ Impossibile leggere active_m15_state.json: {error}"
         )
 
         return default_state()
@@ -240,14 +240,27 @@ def format_entry(position):
         )
     )
 
-    stop = (
-        entry
-        - atr * 1.2
+    direction = position.get(
+        "direction",
+        "LONG",
     )
 
-    target = (
-        entry
-        + atr * 1.5
+    stop = float(
+        position.get(
+            "stop_price",
+            entry - atr * 1.2
+            if direction == "LONG"
+            else entry + atr * 1.2,
+        )
+    )
+
+    target = float(
+        position.get(
+            "take_price",
+            entry + atr * 1.5
+            if direction == "LONG"
+            else entry - atr * 1.5,
+        )
     )
 
     entry_time = position.get(
@@ -255,12 +268,16 @@ def format_entry(position):
         "N/D",
     )
 
+    side_emoji = (
+        "🟢" if direction == "LONG" else "🔴"
+    )
+
     return f"""
 🚨 ATLAS AI SIGNAL
 
 XAU/USD
 
-🟢 LONG
+{side_emoji} {direction}
 
 ━━━━━━━━━━━━━━━━━━━━
 
@@ -281,15 +298,8 @@ XAU/USD
 
 ━━━━━━━━━━━━━━━━━━━━
 
-🧪 MODALITÀ TEST
-
-Il segnale è simulato e viene
-registrato nello storico di Atlas AI.
-
-🛡️ Nessun ordine reale viene eseguito.
-
-⚠️ Segnale generato
-dal sistema Atlas AI.
+📊 Segnale registrato nello storico Atlas AI.
+🔬 Ambiente: Paper Trading.
 """
 
 
@@ -372,8 +382,8 @@ ${pnl:+.2f}
 
 ━━━━━━━━━━━━━━━━━━━━
 
-🧪 MODALITÀ TEST
-🛡️ Nessun ordine reale viene eseguito.
+📊 Trade registrato nello storico Atlas AI.
+🔬 Ambiente: Paper Trading.
 """
 
 
@@ -574,11 +584,11 @@ Telegram è collegato correttamente.
 🟢 Chat ID: OK
 🟢 Alert: OK
 
-Paper Trading:
-🟢 ATTIVO
+Ambiente:
+🟢 PAPER TRADING
 
-Ordini reali:
-🔴 NO
+Storico:
+🟢 ATTIVO
 """
 
     await update.message.reply_text(
@@ -612,7 +622,7 @@ async def start(
                 callback_data="menu_how",
             ),
             InlineKeyboardButton(
-                "🔬 STATO DEL TEST",
+                "🔬 SYSTEM STATUS",
                 callback_data="menu_test",
             ),
         ],
@@ -643,16 +653,14 @@ regole definite e registra ogni
 operazione.
 
 🔬 STATO ATTUALE
-Paper Trading
+🟢 SISTEMA ATTIVO
 
-━━━━━━━━━━━━━━━━━━━━
+📊 Storico pubblico
+🤖 Segnali automatici
+🔬 Paper Trading
 
-📊 Stiamo costruendo uno storico
-pubblico e verificabile.
-
-Non mostriamo soltanto i risultati
-positivi: vengono registrati anche
-profitti, perdite e timeout.
+Il sistema registra ogni operazione,
+inclusi profitti, perdite e timeout.
 
 👇 SCEGLI COSA VUOI VEDERE
 """
@@ -696,6 +704,7 @@ async def menu_callback(
 
         wins = 0
         losses = 0
+        timeouts = 0
         pnl_total = 0.0
 
         for trade in trades:
@@ -710,12 +719,14 @@ async def menu_callback(
             pnl_total += pnl
 
             if pnl > 0:
-
                 wins += 1
-
             elif pnl < 0:
-
                 losses += 1
+
+            if str(
+                trade.get("reason", "")
+            ).upper() == "TIMEOUT":
+                timeouts += 1
 
         if total > 0:
 
@@ -748,6 +759,9 @@ Trades chiusi
 🔴 Loss
 {losses}
 
+🟡 Timeout
+{timeouts}
+
 🎯 Win Rate
 {win_rate:.2f}%
 
@@ -762,8 +776,8 @@ ${balance:,.2f}
 
 ━━━━━━━━━━━━━━━━━━━━
 
-🧪 MODALITÀ TEST
-🛡️ Nessun ordine reale viene eseguito.
+📊 Trade registrato nello storico Atlas AI.
+🔬 Ambiente: Paper Trading.
 
 ⚠️ I risultati sono relativi
 al paper trading e non garantiscono
@@ -825,8 +839,8 @@ i trade positivi.
 
 ━━━━━━━━━━━━━━━━━━━━
 
-🧪 MODALITÀ TEST
-🛡️ Nessun ordine reale viene eseguito.
+📊 Trade registrato nello storico Atlas AI.
+🔬 Ambiente: Paper Trading.
 """
 
         keyboard = [
@@ -869,18 +883,15 @@ i trade positivi.
             position_text = "⚪ FLAT"
 
         text = f"""
-🔬 ATLAS AI TEST STATUS
+🔬 ATLAS AI — SYSTEM STATUS
 
 ━━━━━━━━━━━━━━━━━━━━
 
 Stato sistema
 🟢 ATTIVO
 
-Modalità
+Ambiente
 🟢 PAPER TRADING
-
-Ordini reali
-🔴 NO
 
 Trade chiusi
 {len(trades)}
@@ -890,16 +901,12 @@ Posizione
 
 ━━━━━━━━━━━━━━━━━━━━
 
-Atlas è attualmente nella fase
-di raccolta dati.
+Atlas sta costruendo uno storico
+operativo per valutare la strategia
+nel tempo.
 
-L'obiettivo è costruire uno storico
-sufficientemente ampio per valutare
-la strategia nel tempo.
-
-━━━━━━━━━━━━━━━━━━━━
-
-⚠️ Nessuna promessa di rendimento.
+⚠️ Lo storico non costituisce una
+garanzia di rendimento futuro.
 """
 
         keyboard = [
@@ -936,8 +943,8 @@ possibili condizioni operative.
 
 ━━━━━━━━━━━━━━━━━━━━
 
-🧪 MODALITÀ TEST
-🛡️ Nessun ordine reale viene eseguito.
+📊 Trade registrato nello storico Atlas AI.
+🔬 Ambiente: Paper Trading.
 
 ━━━━━━━━━━━━━━━━━━━━
 
@@ -987,7 +994,7 @@ rendimenti futuri.
                     callback_data="menu_how",
                 ),
                 InlineKeyboardButton(
-                    "🔬 STATO DEL TEST",
+                    "🔬 SYSTEM STATUS",
                     callback_data="menu_test",
                 ),
             ],
@@ -1010,13 +1017,13 @@ Atlas AI è un sistema quantitativo
 dedicato all'analisi di XAU/USD.
 
 🔬 STATO ATTUALE
-Paper Trading
+🟢 SISTEMA ATTIVO
 
 ━━━━━━━━━━━━━━━━━━━━
 
 📊 Storico pubblico
 🤖 Sistema automatico
-🔬 Test in corso
+🔬 Paper Trading
 
 👇 SCEGLI COSA VUOI VEDERE
 """
@@ -1096,6 +1103,11 @@ async def status(
 
     if position:
 
+        direction = position.get(
+            "direction",
+            "N/D",
+        )
+
         entry = float(
             position.get(
                 "entry_price",
@@ -1103,9 +1115,29 @@ async def status(
             )
         )
 
+        stop = float(
+            position.get(
+                "stop_price",
+                0,
+            )
+        )
+
+        target = float(
+            position.get(
+                "take_price",
+                0,
+            )
+        )
+
+        side_emoji = (
+            "🟢" if direction == "LONG" else "🔴"
+        )
+
         position_text = (
-            "🟢 LONG\n\n"
-            f"Entry: {entry:.2f}"
+            f"{side_emoji} {direction}\n"
+            f"Entry: {entry:.2f}\n"
+            f"SL: {stop:.2f}\n"
+            f"TP: {target:.2f}"
         )
 
     else:
@@ -1133,8 +1165,7 @@ ${equity:,.2f}
 ━━━━━━━━━━━━━━━━━━━━
 
 🔔 Alert Telegram: 🟢
-🧪 Modalità: TEST
-🛡️ Ordini reali: NON ESEGUITI
+🔬 Ambiente: PAPER TRADING
 """
 
     await update.message.reply_text(
@@ -1245,8 +1276,9 @@ ${balance:,.2f}
 
 ━━━━━━━━━━━━━━━━━━━━
 
-⚠️ Performance paper,
-non risultati garantiti.
+🔬 Ambiente: Paper Trading
+⚠️ Lo storico non garantisce
+risultati futuri.
 """
 
     await update.message.reply_text(
@@ -1268,25 +1300,27 @@ async def pro(
 💎 ATLAS PRO
 
 Accesso premium ai segnali
-XAU/USD di Atlas AI.
+e alle funzionalità avanzate
+di Atlas AI.
 
 ━━━━━━━━━━━━━━━━━━━━
 
-🟢 Segnali LONG
+🟢 Segnali LONG / SHORT
 🎯 Entry
 🛑 Stop Loss
 💰 Take Profit
-📊 Regime
-📈 Performance
+📊 Performance
 🔔 Alert Telegram
 
 ━━━━━━━━━━━━━━━━━━━━
 
-🚀 €19,90 / mese
+🚀 ATLAS PRO
 
-Pagamento e attivazione
-saranno configurati
-nella fase commerciale.
+Disponibile prossimamente.
+
+Stiamo completando la struttura
+commerciale e l'attivazione
+degli accessi.
 
 ━━━━━━━━━━━━━━━━━━━━
 
@@ -1315,15 +1349,13 @@ l'analisi di XAU/USD.
 
 Indicatori:
 
-• EMA 50 / 200
+• EMA
 • RSI
-• Breakout
 • ATR
 • ADX
 • DI+ / DI-
 
-🧪 MODALITÀ TEST
-🛡️ Nessun ordine reale viene eseguito.
+🔬 Ambiente: Paper Trading
 
 ⚠️ Nessuna garanzia
 di rendimento futuro.
