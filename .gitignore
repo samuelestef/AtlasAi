@@ -29,3 +29,6 @@ telegram_alert_state.json
 # Build
 build/
 dist/
+
+# Active M15 runtime files
+active_m15_state.json
