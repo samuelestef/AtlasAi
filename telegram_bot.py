@@ -5,10 +5,16 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from telegram import Update
+from telegram import (
+    Update,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+)
+
 from telegram.ext import (
     Application,
     CommandHandler,
+    CallbackQueryHandler,
     ContextTypes,
 )
 
@@ -577,7 +583,7 @@ Ordini reali:
 
 
 # ============================================================
-# /START
+# ATLAS AI MENU
 # ============================================================
 
 async def start(
@@ -585,30 +591,440 @@ async def start(
     context: ContextTypes.DEFAULT_TYPE,
 ):
 
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                "📊 RISULTATI",
+                callback_data="menu_results",
+            ),
+            InlineKeyboardButton(
+                "📡 CANALE TELEGRAM",
+                url="https://t.me/atlasaitrading",
+            ),
+        ],
+        [
+            InlineKeyboardButton(
+                "🤖 COME FUNZIONA",
+                callback_data="menu_how",
+            ),
+            InlineKeyboardButton(
+                "🔬 STATO DEL TEST",
+                callback_data="menu_test",
+            ),
+        ],
+        [
+            InlineKeyboardButton(
+                "ℹ️ INFO ATLAS",
+                callback_data="menu_about",
+            ),
+        ],
+    ]
+
+    reply_markup = InlineKeyboardMarkup(
+        keyboard
+    )
+
     text = """
-🤖 ATLAS AI
+🧠 ATLAS AI
 
-XAU/USD Trading Intelligence
-
-━━━━━━━━━━━━━━━━━━━━
-
-📊 /status
-📈 /performance
-🧪 /testalert
-💎 /pro
-🆔 /chatid
-ℹ️ /about
+QUANTITATIVE TRADING INTELLIGENCE
 
 ━━━━━━━━━━━━━━━━━━━━
 
-🔔 Alert automatici: 🟢
-🟢 Paper Trading attivo
-🔴 Ordini reali: NO
+Atlas AI è un sistema quantitativo
+dedicato all'analisi di XAU/USD.
+
+Il sistema genera segnali secondo
+regole definite e registra ogni
+operazione.
+
+🔬 STATO ATTUALE
+Paper Trading
+
+━━━━━━━━━━━━━━━━━━━━
+
+📊 Stiamo costruendo uno storico
+pubblico e verificabile.
+
+Non mostriamo soltanto i risultati
+positivi: vengono registrati anche
+profitti, perdite e timeout.
+
+👇 SCEGLI COSA VUOI VEDERE
 """
 
     await update.message.reply_text(
-        text
+        text,
+        reply_markup=reply_markup,
     )
+
+
+# ============================================================
+# CALLBACK MENU
+# ============================================================
+
+async def menu_callback(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+
+    query = update.callback_query
+
+    await query.answer()
+
+    if query.data == "menu_results":
+
+        state = load_state()
+
+        trades = state.get(
+            "trades",
+            [],
+        )
+
+        balance = float(
+            state.get(
+                "balance",
+                INITIAL_CAPITAL,
+            )
+        )
+
+        total = len(trades)
+
+        wins = 0
+        losses = 0
+        pnl_total = 0.0
+
+        for trade in trades:
+
+            pnl = float(
+                trade.get(
+                    "pnl",
+                    0,
+                )
+            )
+
+            pnl_total += pnl
+
+            if pnl > 0:
+
+                wins += 1
+
+            elif pnl < 0:
+
+                losses += 1
+
+        if total > 0:
+
+            win_rate = (
+                wins
+                / total
+                * 100
+            )
+
+        else:
+
+            win_rate = 0.0
+
+        return_pct = (
+            balance
+            - INITIAL_CAPITAL
+        ) / INITIAL_CAPITAL * 100
+
+        text = f"""
+📊 ATLAS AI RESULTS
+
+━━━━━━━━━━━━━━━━━━━━
+
+Trades chiusi
+{total}
+
+🟢 Profit
+{wins}
+
+🔴 Loss
+{losses}
+
+🎯 Win Rate
+{win_rate:.2f}%
+
+💰 PnL
+${pnl_total:+,.2f}
+
+📈 Return
+{return_pct:+.2f}%
+
+💵 Equity
+${balance:,.2f}
+
+━━━━━━━━━━━━━━━━━━━━
+
+🟢 PAPER TRADING
+🔴 ORDINI REALI: NO
+
+⚠️ I risultati sono relativi
+al paper trading e non garantiscono
+risultati futuri.
+"""
+
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    "🔙 INDIETRO",
+                    callback_data="menu_home",
+                )
+            ]
+        ]
+
+        await query.edit_message_text(
+            text,
+            reply_markup=InlineKeyboardMarkup(
+                keyboard
+            ),
+        )
+
+        return
+
+    if query.data == "menu_how":
+
+        text = """
+🤖 COME FUNZIONA ATLAS
+
+━━━━━━━━━━━━━━━━━━━━
+
+Atlas AI analizza XAU/USD
+utilizzando una strategia quantitativa.
+
+Il sistema valuta diversi elementi
+del mercato e, quando le condizioni
+sono soddisfatte, genera un segnale.
+
+📊 Il sistema registra:
+
+• Entry
+• Stop Loss
+• Take Profit
+• Exit
+• PnL
+• Motivo della chiusura
+
+━━━━━━━━━━━━━━━━━━━━
+
+🔬 Ogni operazione viene registrata
+nello storico.
+
+Non vengono mostrati soltanto
+i trade positivi.
+
+🟢 Profit
+🔴 Loss
+🟡 Timeout
+
+━━━━━━━━━━━━━━━━━━━━
+
+🟢 PAPER TRADING
+🔴 ORDINI REALI: NO
+"""
+
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    "🔙 INDIETRO",
+                    callback_data="menu_home",
+                )
+            ]
+        ]
+
+        await query.edit_message_text(
+            text,
+            reply_markup=InlineKeyboardMarkup(
+                keyboard
+            ),
+        )
+
+        return
+
+    if query.data == "menu_test":
+
+        state = load_state()
+
+        trades = state.get(
+            "trades",
+            [],
+        )
+
+        position = state.get(
+            "position"
+        )
+
+        if position:
+
+            position_text = "🟢 POSIZIONE APERTA"
+
+        else:
+
+            position_text = "⚪ FLAT"
+
+        text = f"""
+🔬 ATLAS AI TEST STATUS
+
+━━━━━━━━━━━━━━━━━━━━
+
+Stato sistema
+🟢 ATTIVO
+
+Modalità
+🟢 PAPER TRADING
+
+Ordini reali
+🔴 NO
+
+Trade chiusi
+{len(trades)}
+
+Posizione
+{position_text}
+
+━━━━━━━━━━━━━━━━━━━━
+
+Atlas è attualmente nella fase
+di raccolta dati.
+
+L'obiettivo è costruire uno storico
+sufficientemente ampio per valutare
+la strategia nel tempo.
+
+━━━━━━━━━━━━━━━━━━━━
+
+⚠️ Nessuna promessa di rendimento.
+"""
+
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    "🔙 INDIETRO",
+                    callback_data="menu_home",
+                )
+            ]
+        ]
+
+        await query.edit_message_text(
+            text,
+            reply_markup=InlineKeyboardMarkup(
+                keyboard
+            ),
+        )
+
+        return
+
+    if query.data == "menu_about":
+
+        text = """
+ℹ️ ATLAS AI
+
+━━━━━━━━━━━━━━━━━━━━
+
+Sistema quantitativo dedicato
+all'analisi di XAU/USD.
+
+Atlas utilizza indicatori e regole
+quantitative per identificare
+possibili condizioni operative.
+
+━━━━━━━━━━━━━━━━━━━━
+
+🟢 PAPER TRADING
+🔴 ORDINI REALI: NO
+
+━━━━━━━━━━━━━━━━━━━━
+
+L'obiettivo è raccogliere dati,
+misurare le performance e valutare
+la strategia attraverso uno storico
+trasparente.
+
+⚠️ Atlas AI non garantisce
+rendimenti futuri.
+"""
+
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    "🔙 INDIETRO",
+                    callback_data="menu_home",
+                )
+            ]
+        ]
+
+        await query.edit_message_text(
+            text,
+            reply_markup=InlineKeyboardMarkup(
+                keyboard
+            ),
+        )
+
+        return
+
+    if query.data == "menu_home":
+
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    "📊 RISULTATI",
+                    callback_data="menu_results",
+                ),
+                InlineKeyboardButton(
+                    "📡 CANALE TELEGRAM",
+                    url="https://t.me/atlasaitrading",
+                ),
+            ],
+            [
+                InlineKeyboardButton(
+                    "🤖 COME FUNZIONA",
+                    callback_data="menu_how",
+                ),
+                InlineKeyboardButton(
+                    "🔬 STATO DEL TEST",
+                    callback_data="menu_test",
+                ),
+            ],
+            [
+                InlineKeyboardButton(
+                    "ℹ️ INFO ATLAS",
+                    callback_data="menu_about",
+                ),
+            ],
+        ]
+
+        text = """
+🧠 ATLAS AI
+
+QUANTITATIVE TRADING INTELLIGENCE
+
+━━━━━━━━━━━━━━━━━━━━
+
+Atlas AI è un sistema quantitativo
+dedicato all'analisi di XAU/USD.
+
+🔬 STATO ATTUALE
+Paper Trading
+
+━━━━━━━━━━━━━━━━━━━━
+
+📊 Storico pubblico
+🤖 Sistema automatico
+🔬 Test in corso
+
+👇 SCEGLI COSA VUOI VEDERE
+"""
+
+        await query.edit_message_text(
+            text,
+            reply_markup=InlineKeyboardMarkup(
+                keyboard
+            ),
+        )
+
+        return
 
 
 # ============================================================
@@ -971,6 +1387,9 @@ def main():
     print(
         "🔔 Alert automatici attivi"
     )
+    print(
+        "🎛️ Menu interattivo attivo"
+    )
     print()
 
     application = (
@@ -980,6 +1399,10 @@ def main():
         .post_init(post_init)
         .build()
     )
+
+    # ========================================================
+    # COMMANDS
+    # ========================================================
 
     application.add_handler(
         CommandHandler(
@@ -1029,6 +1452,20 @@ def main():
             about,
         )
     )
+
+    # ========================================================
+    # INLINE MENU CALLBACKS
+    # ========================================================
+
+    application.add_handler(
+        CallbackQueryHandler(
+            menu_callback,
+        )
+    )
+
+    # ========================================================
+    # START BOT
+    # ========================================================
 
     application.run_polling(
         drop_pending_updates=True
