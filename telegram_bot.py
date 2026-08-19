@@ -281,8 +281,12 @@ XAU/USD
 
 ━━━━━━━━━━━━━━━━━━━━
 
-🟢 PAPER TRADE
-🔴 ORDINI REALI: NO
+🧪 MODALITÀ TEST
+
+Il segnale è simulato e viene
+registrato nello storico di Atlas AI.
+
+🛡️ Nessun ordine reale viene eseguito.
 
 ⚠️ Segnale generato
 dal sistema Atlas AI.
@@ -368,8 +372,8 @@ ${pnl:+.2f}
 
 ━━━━━━━━━━━━━━━━━━━━
 
-🟢 PAPER TRADING
-🔴 ORDINI REALI: NO
+🧪 MODALITÀ TEST
+🛡️ Nessun ordine reale viene eseguito.
 """
 
 
@@ -758,8 +762,8 @@ ${balance:,.2f}
 
 ━━━━━━━━━━━━━━━━━━━━
 
-🟢 PAPER TRADING
-🔴 ORDINI REALI: NO
+🧪 MODALITÀ TEST
+🛡️ Nessun ordine reale viene eseguito.
 
 ⚠️ I risultati sono relativi
 al paper trading e non garantiscono
@@ -821,8 +825,8 @@ i trade positivi.
 
 ━━━━━━━━━━━━━━━━━━━━
 
-🟢 PAPER TRADING
-🔴 ORDINI REALI: NO
+🧪 MODALITÀ TEST
+🛡️ Nessun ordine reale viene eseguito.
 """
 
         keyboard = [
@@ -932,8 +936,8 @@ possibili condizioni operative.
 
 ━━━━━━━━━━━━━━━━━━━━
 
-🟢 PAPER TRADING
-🔴 ORDINI REALI: NO
+🧪 MODALITÀ TEST
+🛡️ Nessun ordine reale viene eseguito.
 
 ━━━━━━━━━━━━━━━━━━━━
 
@@ -1129,8 +1133,8 @@ ${equity:,.2f}
 ━━━━━━━━━━━━━━━━━━━━
 
 🔔 Alert Telegram: 🟢
-Paper Trading: 🟢
-Ordini reali: 🔴 NO
+🧪 Modalità: TEST
+🛡️ Ordini reali: NON ESEGUITI
 """
 
     await update.message.reply_text(
@@ -1318,8 +1322,8 @@ Indicatori:
 • ADX
 • DI+ / DI-
 
-🟢 PAPER TRADING
-🔴 ORDINI REALI: NO
+🧪 MODALITÀ TEST
+🛡️ Nessun ordine reale viene eseguito.
 
 ⚠️ Nessuna garanzia
 di rendimento futuro.
